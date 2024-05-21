@@ -2,12 +2,14 @@ package com.example.todo.userapi.api;
 
 import com.example.todo.userapi.dto.request.LoginRequestDTO;
 import com.example.todo.userapi.dto.request.UserSignUpRequestDTO;
+import com.example.todo.userapi.dto.response.LoginResponseDTO;
 import com.example.todo.userapi.dto.response.UserSignUpResponseDTO;
 import com.example.todo.userapi.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,7 +37,7 @@ public class UserController {
     }
 
     // 회원 가입 요청 처리
-    // POST: /api/auth
+    // POST : /api/auth
     @PostMapping
     public ResponseEntity<?> signUp(
             @Validated @RequestBody UserSignUpRequestDTO dto,
@@ -43,11 +45,8 @@ public class UserController {
     ) {
         log.info("/api/auth POST! - {}", dto);
 
-        if (result.hasErrors()) {
-            log.warn(result.toString());
-            return ResponseEntity.badRequest()
-                    .body(result.getFieldError());
-        }
+        ResponseEntity<FieldError> resultEntity = getFieldErrorResponseEntity(result);
+        if (resultEntity != null) return resultEntity;
 
         try {
             UserSignUpResponseDTO responseDTO = userService.create(dto);
@@ -56,7 +55,34 @@ public class UserController {
             e.printStackTrace();
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
 
+    @PostMapping("/signin")
+    public ResponseEntity<?> signIn(
+            @Validated @RequestBody LoginRequestDTO dto,
+            BindingResult result
+    ) {
+        log.info("/api/auth/signin - POST! - {}", dto);
+
+        ResponseEntity<FieldError> response = getFieldErrorResponseEntity(result);
+        if (response != null) return response;
+
+        try {
+            LoginResponseDTO responseDTO = userService.authenticate(dto);
+            return ResponseEntity.ok().body(responseDTO);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    private static ResponseEntity<FieldError> getFieldErrorResponseEntity(BindingResult result) {
+        if (result.hasErrors()) {
+            log.warn(result.toString());
+            return ResponseEntity.badRequest()
+                    .body(result.getFieldError());
+        }
+        return null;
     }
 
 }
