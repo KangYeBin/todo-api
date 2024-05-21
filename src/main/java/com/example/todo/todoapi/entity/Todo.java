@@ -1,7 +1,11 @@
 package com.example.todo.todoapi.entity;
 
+import com.example.todo.userapi.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -23,4 +27,10 @@ public class Todo {
 
     private boolean done;   // 할 일 완료 여부
 
+    @CreationTimestamp
+    private LocalDateTime createDate; // 등록 시간
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 }

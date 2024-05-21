@@ -71,4 +71,29 @@ public class TokenProvider {
                 .compact();
     }
 
+    /**
+     * 클라이언트가 전송한 토큰을 디코딩하여 토큰의 위조 여부 확인
+     * 토큰을 json으로 파싱해서 클레임(토큰 정보)을 리턴
+     *
+     * @param token - 필터가 전달해준 토큰
+     * @return - 토큰 안에 있는 인증된 유저 정보 반환
+     */
+    public TokenUserInfo validateAndGetTokenUserInfo(String token) {
+        Claims claims = Jwts.parserBuilder()
+                // 토큰 발급자의 발급 당시 서명을 넣는다
+                .setSigningKey(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
+                // 서명 위조 검사 : 위조된 경우 예외 발생
+                // 위조되지 않은 경우 payload 리턴
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        log.info("claims : {}", claims);
+
+        return TokenUserInfo.builder()
+                .userId(claims.getSubject())
+                .email(claims.get("email", String.class))
+                .role(Role.valueOf(claims.get("role", String.class)))
+                .build();
+    }
 }
