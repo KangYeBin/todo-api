@@ -52,6 +52,7 @@ public class WebSecurityConfig {
                                 // /api/auth/**은 permit이지만 /promote 요청은 검증이 필요하므로 추가
                                 .requestMatchers(HttpMethod.PUT, "/api/auth/promote")
                                 .authenticated()
+                                .requestMatchers("/api/auth/load-profile").authenticated()
                                 // /api/auth로 시작하거나 / 요청은 권한 검사 없이 허용한다
                                 .requestMatchers("/", "/api/auth/**")
                                 .permitAll()
