@@ -48,6 +48,10 @@ public class WebSecurityConfig {
                         authorizeRequests
                                 // ex) /api/todos 라는 요청이 post로 들어오고, Role 값이 ADMIN인 경우 권한 검사없이 허용하겠다
                                 // .requestMatchers(HttpMethod.POST, "/api/todos").hasRole("ADMIN")
+                                
+                                // /api/auth/**은 permit이지만 /promote 요청은 검증이 필요하므로 추가
+                                .requestMatchers(HttpMethod.PUT, "/api/auth/promote")
+                                .authenticated()
                                 // /api/auth로 시작하거나 / 요청은 권한 검사 없이 허용한다
                                 .requestMatchers("/", "/api/auth/**")
                                 .permitAll()

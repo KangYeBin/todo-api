@@ -47,8 +47,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 // 인가 정보 리스트를 생성해서 spring security에 전달
                 // 권한이 여러 개 존재할 경우 리스트로 권한 체크에 사용할 필드를 add
                 List<SimpleGrantedAuthority> authrityList = new ArrayList<>();
-                authrityList.add(new SimpleGrantedAuthority(tokenUserInfo.getRole().toString()));
-                
+                authrityList.add(new SimpleGrantedAuthority("ROLE_" + tokenUserInfo.getRole().toString()));
+
                 // 인증 완료 처리
                 // spring security에게 인증 정보를 전달해서 전역적으로 어플리케이션 내에서 인증 정보를 활용할 수 있게 설정
                 AbstractAuthenticationToken auth = new UsernamePasswordAuthenticationToken(

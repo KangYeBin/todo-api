@@ -7,7 +7,6 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Getter
-@Setter
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
@@ -38,4 +37,8 @@ public class User {
     @Builder.Default
     private Role role = Role.COMMON;    //  유저 권한
 
+    // 등급 수정 메서드 (엔터티는 @Setter를 설정하지 않고 변경 가능성이 있는 필드를 직접 수정하는 메서드를 작성하는 것이 일반적)
+    public void changeRole(Role role) {
+        this.role = role;
+    }
 }

@@ -6,6 +6,7 @@ import com.example.todo.todoapi.dto.response.TodoDetailResponseDTO;
 import com.example.todo.todoapi.dto.response.TodoListResponseDTO;
 import com.example.todo.todoapi.entity.Todo;
 import com.example.todo.todoapi.repository.TodoRepository;
+import com.example.todo.userapi.entity.Role;
 import com.example.todo.userapi.entity.User;
 import com.example.todo.userapi.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,12 +29,17 @@ public class TodoService {
 
     public TodoListResponseDTO create(
             final TodoCreateRequestDTO requestDTO,
-            final String userId)
-            throws Exception {
+            final String userId) {
 
         // 이제 할 일 등록은 회원만 할 수 있도록 하기 때문에
         // toEntity의 매개값으로 User 엔터티도 함께 전달 -> userId로 회원 엔터티 조회 필요
         User user = getUser(userId);
+
+        // 권한에 따른 글쓰기 제한 처리
+        // 일반 회원이 일정을 5개 초과해서 작성하면 예외 발생
+        if (user.getRole() == Role.COMMON && todoRepository.countByUser(user) >= 5) {
+            throw new IllegalArgumentException("일반 회원은 더 이상 일정을 등록할 수 없습니다");
+        }
 
         todoRepository.save(requestDTO.toEntity(user));
         log.info("할일 저장 완료. 제목 : {}", requestDTO.getTitle());
@@ -43,9 +49,8 @@ public class TodoService {
     }
 
 
-
     // 할 일 목록 가져오기
-    public TodoListResponseDTO retrieve(String userId) throws Exception {
+    public TodoListResponseDTO retrieve(String userId) {
 
         // 로그인 한 유저의 정보를 데이터베이스에서 조회
         User user = getUser(userId);
@@ -62,7 +67,7 @@ public class TodoService {
     }
 
     public TodoListResponseDTO delete(
-            final String todoId, final String userId) throws Exception {
+            final String todoId, final String userId) {
 
         todoRepository.findById(todoId).orElseThrow(
                 () -> {
@@ -75,7 +80,7 @@ public class TodoService {
     }
 
     public TodoListResponseDTO update(
-            final TodoModifyRequestDTO requestDTO, final String userId) throws Exception {
+            final TodoModifyRequestDTO requestDTO, final String userId) {
         Optional<Todo> targetEntity = todoRepository.findById(requestDTO.getId());
 
         targetEntity.ifPresent(todo -> {

@@ -1,5 +1,6 @@
 package com.example.todo.userapi.api;
 
+import com.example.todo.auth.TokenUserInfo;
 import com.example.todo.userapi.dto.request.LoginRequestDTO;
 import com.example.todo.userapi.dto.request.UserSignUpRequestDTO;
 import com.example.todo.userapi.dto.response.LoginResponseDTO;
@@ -8,6 +9,8 @@ import com.example.todo.userapi.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
@@ -48,13 +51,8 @@ public class UserController {
         ResponseEntity<FieldError> resultEntity = getFieldErrorResponseEntity(result);
         if (resultEntity != null) return resultEntity;
 
-        try {
-            UserSignUpResponseDTO responseDTO = userService.create(dto);
-            return ResponseEntity.ok().body(responseDTO);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        UserSignUpResponseDTO responseDTO = userService.create(dto);
+        return ResponseEntity.ok().body(responseDTO);
     }
 
     @PostMapping("/signin")
@@ -67,13 +65,19 @@ public class UserController {
         ResponseEntity<FieldError> response = getFieldErrorResponseEntity(result);
         if (response != null) return response;
 
-        try {
-            LoginResponseDTO responseDTO = userService.authenticate(dto);
-            return ResponseEntity.ok().body(responseDTO);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        LoginResponseDTO responseDTO = userService.authenticate(dto);
+        return ResponseEntity.ok().body(responseDTO);
+    }
+
+    @PutMapping("/promote")
+    // 권한 검수 (해당 권한이 아니라면 인가처리 거부 -> 403 상태 리턴)
+    // 메서드 호출 전에 검사 -> 요청 당시 토큰에 있는 user 정보가 ROLE_COMMON이라는 권한을 갖는지 검사
+    @PreAuthorize("hasRole('ROLE_COMMON')")
+    public ResponseEntity<?> promote(@AuthenticationPrincipal TokenUserInfo userInfo) {
+        log.info("/api/auth/promote - PUT!");
+
+        LoginResponseDTO responseDTO = userService.promoteToPremium(userInfo);
+        return ResponseEntity.ok().body(responseDTO);
     }
 
     private static ResponseEntity<FieldError> getFieldErrorResponseEntity(BindingResult result) {
