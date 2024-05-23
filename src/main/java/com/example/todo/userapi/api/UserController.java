@@ -138,6 +138,14 @@ public class UserController {
         }
     }
 
+    @GetMapping("/kakaologin")
+    public ResponseEntity<?> kakaoLogin(String code) {
+        log.info("/api/auth/kakaoLogin - GET! code : {}", code);
+
+        userService.kakaoService(code);
+        return null;
+    }
+
     private MediaType findExtensionAndGetMediaType(String filePath) {
         // 파일 경로에서 확장자 추출
         // C:/todo_upload/anlekjvlafkejflakwej.jpg
