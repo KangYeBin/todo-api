@@ -8,6 +8,7 @@ import com.example.todo.userapi.dto.response.UserSignUpResponseDTO;
 import com.example.todo.userapi.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -115,6 +116,11 @@ public class UserController {
             // 모든 사용자가 프로필 사진을 가지는 것은 아니다 (등록하지 않은 사람은 경로가 존재하지 않음)
             // 만약 존재하지 않는 경로라면 클라이언트로 404 status를 리턴
             if (!profileFile.exists()) {
+                // 만약 조회한 파일 경로가 http://~로 시작한다면 카카오 로그인
+                // 카카오 로그인 프로필은 변환 과정 없이 바로 이미지 url 리턴
+                if (filePath.startsWith("http://")) {
+                    return ResponseEntity.ok().body(filePath);
+                }
                 return ResponseEntity.notFound().build();
             }
 
@@ -142,8 +148,16 @@ public class UserController {
     public ResponseEntity<?> kakaoLogin(String code) {
         log.info("/api/auth/kakaoLogin - GET! code : {}", code);
 
-        userService.kakaoService(code);
-        return null;
+        LoginResponseDTO responseDTO = userService.kakaoService(code);
+        return ResponseEntity.ok().body(responseDTO);
+    }
+
+    @GetMapping("/logout")
+    public ResponseEntity<?> logout(@AuthenticationPrincipal TokenUserInfo userInfo) {
+        log.info("/api/auth/logout - GET! - user : {}", userInfo.getEmail());
+
+        String result = userService.logout(userInfo);
+        return ResponseEntity.ok().body(result);
     }
 
     private MediaType findExtensionAndGetMediaType(String filePath) {
