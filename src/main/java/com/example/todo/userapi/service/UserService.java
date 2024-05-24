@@ -28,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -96,9 +97,19 @@ public class UserService {
         log.info("{}님 로그인 성공", user.getUserName());
 
         // 로그인 성공 후 로그인 유지를 위해 클라이언트에게 JWT를 발급해주어야 한다
-        String token = tokenProvider.createToken(user);
-
+        Map<String, String> token = getTokenMap(user);
         return new LoginResponseDTO(user, token);
+    }
+
+    // AccessKey와 RefreshKey를 한번에 새롭게 발급받아 마ㅕㅐ
+    private Map<String, String> getTokenMap(User user) {
+        String accessToken = tokenProvider.createAccessKey(user);
+        String refreshToken = tokenProvider.createRefreshKey(user);
+
+        Map<String, String> token = new HashMap<>();
+        token.put("access_token", accessToken);
+        token.put("refresh_token", refreshToken);
+        return token;
     }
 
     public LoginResponseDTO promoteToPremium(TokenUserInfo userInfo) {
@@ -116,7 +127,7 @@ public class UserService {
         User saved = userRepository.save(user);
 
         // 변경된 정보가 반영된 토큰으로 재발급 (토큰에 Role이 포함되므로)
-        String token = tokenProvider.createToken(saved);
+        Map<String, String> token = getTokenMap(user);
 
         return new LoginResponseDTO(saved, token);
     }
@@ -178,7 +189,7 @@ public class UserService {
         User foundUser = userRepository.findByEmail(userDTO.getKakaoAccount().getEmail()).orElseThrow();
 
         // 사이트 내에서 사용하는 jwt 생성
-        String token = tokenProvider.createToken(foundUser);
+        Map<String, String> token = getTokenMap(foundUser);
 
         // 기존에 로그인했던 사용자의 access token 값을 update
         foundUser.changeAccessToken(accessToken);
