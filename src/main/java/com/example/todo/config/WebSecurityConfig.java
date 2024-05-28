@@ -1,15 +1,14 @@
 package com.example.todo.config;
 
 import com.example.todo.exception.CustomAccessDeniedHandler;
-import com.example.todo.exception.CustomAuthenticationEntryPoint;
 import com.example.todo.filter.JWTExceptionFilter;
 import com.example.todo.filter.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -20,6 +19,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.util.Arrays;
+import java.util.List;
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity   // 자동 권한 검사를 컨트롤러릐 메서드에서 전역적으로 수행하기 위한 설정
@@ -29,12 +31,15 @@ public class WebSecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final JWTExceptionFilter jwtExceptionFilter;
-    private final CustomAuthenticationEntryPoint entryPoint;
     private final CustomAccessDeniedHandler accessDeniedHandler;
+    private final RequestProperies properies;
 
     // 시큐리티 기본 설정 (권한처리, 초기 로그인 화면 없애기 ....)
     @Bean // 라이브러리 클래스 같은 내가 만들지 않은 객체를 등록해서 주입받기 위한 아노테이션.
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
+        // yml에서 가져온 허용 url 리스트를 jwtAuthFilter에게 전달
+        jwtAuthFilter.setPermitAllPatterns(properies.getPermitAllPatterns());
 
         http
                 .csrf(csrfConfig -> csrfConfig.disable()) // CSRF 토큰공격을 방지하기 위한 장치 해제.
@@ -64,7 +69,7 @@ public class WebSecurityConfig {
                                 .requestMatchers(HttpMethod.PUT, "/api/auth/promote").authenticated()
                                 .requestMatchers("/api/auth/load-profile").authenticated()
                                 // /api/auth로 시작하거나 / 요청은 권한 검사 없이 허용한다
-                                .requestMatchers("/", "/api/auth/**")
+                                .requestMatchers(Arrays.toString(properies.getPermitAllPatterns().toArray()).split(", "))
                                 .permitAll()
                                 // 위에서 따로 설정하지 않은 나머지 요청들은 권한 검사가 필요하다
                                 .anyRequest().authenticated()

@@ -12,4 +12,7 @@ public interface UserRepository extends JpaRepository<User
     boolean existsByEmail(String email);
 
     Optional<User> findByEmail(String email);
+
+    // 리프레시 토큰으로 사용자 정보 조회
+    Optional<User> findByRefreshToken(String refreshToken);
 }
